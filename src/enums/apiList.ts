@@ -10,6 +10,11 @@ static  DeleteUser:string='users/Delete';
 static  RoleList:string='users/RoleList';
 static  AddEditRole:string='users/AddEditRole';
 static  DeleteRole:string='users/DeleteRole';
+static  PermissionList:string='users/PermissionList';
+static  RoleMenuAccess:string='users/RoleMenuAccess';
+static  SaveRoleMenuAccess:string='users/SaveRoleMenuAccess';
+
+
   //****************Product *************** */
   static  ProductList:string='product/ProductList';
   static  AddEditProduct:string='product/AddEditProduct';

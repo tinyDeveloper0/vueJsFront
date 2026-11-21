@@ -6,6 +6,8 @@ import DashboardView from '@/views/DashboardView.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 
 import { useAuthStore } from '@/stores/auth'
+import UserList from '@/views/UserList.vue'
+import RoleList from '@/views/RoleList.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -46,6 +48,16 @@ const router = createRouter({
           path: 'reports',
           name: 'reports',
           component: ReportView,
+        },
+        {
+          path: 'userList',
+          name: 'userList',
+          component: UserList,
+        },
+        {
+          path: 'roleList',
+          name: 'roleList',
+          component: RoleList,
         },
       ],
     },
