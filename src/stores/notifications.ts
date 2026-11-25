@@ -113,6 +113,7 @@ export const useNotificationStore = defineStore('notifications', () => {
         if (item.id === notificationId) {
           item.isRead = response.isRead
           item.readAt = response.readAt
+          item.readAtShamsi = response.readAtShamsi
         }
       }
 

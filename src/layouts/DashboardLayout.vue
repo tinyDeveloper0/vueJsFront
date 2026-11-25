@@ -24,6 +24,8 @@ import {
   NTag,
   NText,
   useMessage,
+  type DropdownDividerOption,
+  type DropdownOption,
 } from 'naive-ui'
 
 import type { MenuOption } from 'naive-ui'
@@ -37,6 +39,9 @@ import type { MenuItem } from '@/types/auth'
 
 import { useMenuStore } from '@/stores/menu'
 import { useNotificationStore } from '@/stores/notifications'
+import { userApi } from '@/api/userApi'
+import AccountSettingsModal from '@/components/AccountSettingsModal.vue'
+import type { AccountProfile } from '@/types/account'
 import type { NotificationItem } from '@/types/notification'
 import {
   getNotificationPriorityDetails,
@@ -60,6 +65,8 @@ const menuOptions = ref<MenuOption[]>([])
 const menuLoading = ref(false)
 const showNotifications = ref(false)
 const selectedNotification = ref<NotificationItem | null>(null)
+const showAccountSettings = ref(false)
+const accountSettingsTab = ref<'profile' | 'password'>('profile')
 
 function updateScreenSize() {
   isMobile.value = window.innerWidth < 768
@@ -74,6 +81,7 @@ onMounted(() => {
   void loadUserMenus()
   void notificationStore.connectRealtime()
   void notificationStore.loadUnreadCount()
+  void loadAccountProfile()
 })
 
 onUnmounted(() => {
@@ -90,12 +98,17 @@ const userInitial = computed(() => {
   return userName.value.charAt(0).toUpperCase()
 })
 
-const userMenuOptions = [
-  {
-    label: 'Logout',
-    key: 'logout',
-  },
-]
+const userRolesLabel = computed(() => authStore.user?.roles?.join(' · ') || 'No assigned role')
+
+const userMenuOptions = computed<Array<DropdownOption | DropdownDividerOption>>(() => [
+  { label: userName.value, key: 'account-name', disabled: true },
+  { label: `Roles: ${userRolesLabel.value}`, key: 'account-roles', disabled: true },
+  { type: 'divider', key: 'account-divider' },
+  { label: 'Edit personal profile', key: 'edit-profile' },
+  { label: 'Change password', key: 'change-password' },
+  { type: 'divider', key: 'logout-divider' },
+  { label: 'Logout', key: 'logout' },
+])
 
 /**
  * Converts backend menu items to Naive UI menu options.
@@ -158,6 +171,24 @@ async function loadUserMenus(): Promise<void> {
   }
 }
 
+async function loadAccountProfile(): Promise<void> {
+  try {
+    const profile = await userApi.getAccountProfile()
+    authStore.updateProfile(profile)
+  } catch (error: unknown) {
+    console.error('Failed to load account profile:', error)
+  }
+}
+
+function openAccountSettings(tab: 'profile' | 'password'): void {
+  accountSettingsTab.value = tab
+  showAccountSettings.value = true
+}
+
+function handleProfileUpdated(profile: AccountProfile): void {
+  authStore.updateProfile(profile)
+}
+
 function handleNotificationToggle(visible: boolean): void {
   if (!visible) return
 
@@ -206,6 +237,15 @@ function handleMenuSelect(key: string) {
 }
 
 async function handleUserMenu(key: string) {
+  if (key === 'edit-profile') {
+    openAccountSettings('profile')
+    return
+  }
+  if (key === 'change-password') {
+    openAccountSettings('password')
+    return
+  }
+
   if (key === 'logout') {
     menuStore.resetMenus()
     await authStore.logout()
@@ -358,7 +398,7 @@ async function handleUserMenu(key: string) {
                       </div>
                     </div>
                     <n-text depth="3" class="notification-item-date">
-                      {{ new Date(notification.createdAt).toLocaleString() }}
+                      {{ notification.createdAtShamsi }}
                     </n-text>
                     <span class="notification-item-body">{{ notification.body }}</span>
                   </button>
@@ -388,7 +428,8 @@ async function handleUserMenu(key: string) {
               </n-avatar>
 
               <span class="user-name">
-                {{ userName }}
+                <span class="user-full-name">{{ userName }}</span>
+                <span class="user-roles">{{ userRolesLabel }}</span>
               </span>
             </n-button>
           </n-dropdown>
@@ -427,9 +468,15 @@ async function handleUserMenu(key: string) {
         </n-tag>
       </div>
       <n-text v-if="selectedNotification" depth="3">
-        {{ new Date(selectedNotification.createdAt).toLocaleString() }}
+        {{ selectedNotification.createdAtShamsi }}
       </n-text>
     </n-modal>
+
+    <AccountSettingsModal
+      v-model:show="showAccountSettings"
+      :initial-tab="accountSettingsTab"
+      @profile-updated="handleProfileUpdated"
+    />
   </n-layout>
 </template>
 
@@ -569,10 +616,28 @@ async function handleUserMenu(key: string) {
 }
 
 .user-name {
+  display: flex;
+  flex-direction: column;
   max-width: 180px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.user-full-name,
+.user-roles {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.user-full-name {
+  font-weight: 600;
+}
+
+.user-roles {
+  max-width: 180px;
+  font-size: 11px;
+  opacity: 0.72;
 }
 
 .content {

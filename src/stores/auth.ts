@@ -12,6 +12,7 @@ import {
 } from '@/auth/session'
 
 import type { User } from '@/types/auth'
+import type { AccountProfile } from '@/types/account'
 
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(getAccessToken())
@@ -44,6 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
       fullName: response.fullName,
       username: response.username,
       isAdmin: response.isAdmin,
+      roles: response.roles,
     }
 
     user.value = loggedInUser
@@ -63,11 +65,23 @@ export const useAuthStore = defineStore('auth', () => {
     clearSession()
   }
 
+  function updateProfile(profile: AccountProfile): void {
+    if (!user.value) return
+
+    user.value = {
+      ...user.value,
+      fullName: profile.fullName,
+      roles: [...profile.roles],
+    }
+    setStoredUser(user.value)
+  }
+
   return {
     accessToken,
     user,
     isAuthenticated,
     login,
     logout,
+    updateProfile,
   }
 })

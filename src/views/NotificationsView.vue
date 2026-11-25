@@ -117,7 +117,7 @@ async function markAllAsRead(): Promise<void> {
             </div>
           </div>
           <n-text depth="3" class="history-item-date">
-            {{ new Date(notification.createdAt).toLocaleString() }}
+            {{ notification.createdAtShamsi }}
           </n-text>
           <span class="history-item-body">{{ notification.body }}</span>
         </button>
@@ -178,7 +178,7 @@ async function markAllAsRead(): Promise<void> {
       </n-tag>
     </div>
     <n-text v-if="selectedNotification" depth="3">
-      {{ new Date(selectedNotification.createdAt).toLocaleString() }}
+      {{ selectedNotification.createdAtShamsi }}
     </n-text>
   </n-modal>
 </template>

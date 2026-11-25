@@ -11,8 +11,10 @@ export interface NotificationItem {
   notificationType: NotificationType
   priority: NotificationPriority
   createdAt: string
+  createdAtShamsi: string
   isRead: boolean
   readAt: string | null
+  readAtShamsi: string | null
 }
 
 export interface NotificationListResponse {
@@ -23,6 +25,7 @@ export interface NotificationListResponse {
 export interface NotificationReadResponse {
   isRead: boolean
   readAt: string | null
+  readAtShamsi: string | null
 }
 
 export interface NotificationReadAllResponse {
@@ -35,6 +38,8 @@ export interface NotificationAdminFilter {
   priority: number | null
   targetType: number | null
   isActive: boolean | null
+  createdAtFrom: string | null
+  createdAtTo: string | null
   page: number
   perPage: number
 }
@@ -48,7 +53,9 @@ export interface AdminNotificationItem {
   targetType: NotificationTargetType
   targetIds: number[]
   createdAt: string
+  createdAtShamsi: string
   expiresAt: string | null
+  expiresAtShamsi: string | null
   isActive: boolean
   isExpired: boolean
   recipientCount: number
@@ -87,6 +94,7 @@ export interface NotificationReadReportUser {
   fullName: string
   isRead: boolean
   readAt: string | null
+  readAtShamsi: string | null
 }
 
 export interface NotificationReadReportResponse {

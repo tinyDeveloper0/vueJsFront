@@ -71,7 +71,7 @@ const columns: DataTableColumns<NotificationReadReportUser> = [
     title: 'Read At',
     key: 'readAt',
     render(row) {
-      return row.readAt ? new Date(row.readAt).toLocaleString() : '—'
+      return row.readAtShamsi ?? '—'
     },
   },
 ]

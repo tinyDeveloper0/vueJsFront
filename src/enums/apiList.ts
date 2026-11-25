@@ -2,6 +2,9 @@ export class apiList
 {
   //****************User *************** */
 static  Authenticate:string='users/authenticate';
+static  AccountProfile:string='users/Profile';
+static  UpdateAccountProfile:string='users/UpdateProfile';
+static  ChangePassword:string='users/ChangePassword';
 static  UserMenus:string='users/UserMenus';
 static  UserList:string='users/UserList';
 static  AddEditUser:string='users/AddEditUser';

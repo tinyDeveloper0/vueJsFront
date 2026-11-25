@@ -5,6 +5,7 @@ import {
   NButton,
   NCard,
   NDataTable,
+  NDatePicker,
   NForm,
   NFormItem,
   NInput,
@@ -50,9 +51,12 @@ const filter = reactive<NotificationAdminFilter>({
   priority: null,
   targetType: null,
   isActive: null,
+  createdAtFrom: null,
+  createdAtTo: null,
   page: 1,
   perPage: 20,
 })
+const createdAtRange = ref<[number, number] | null>(null)
 
 const pagination = reactive({
   page: 1,
@@ -100,6 +104,27 @@ function updatePriorityFilter(value: string | number | null): void {
 
 function updateTargetFilter(value: string | number | null): void {
   filter.targetType = value === 'all' || value === null ? null : Number(value)
+}
+
+function toLocalDateTime(timestamp: number): string {
+  const date = new Date(timestamp)
+  const pad = (value: number, length = 2) => String(value).padStart(length, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.` +
+    pad(date.getMilliseconds(), 3)
+}
+
+function updateCreatedAtRange(value: number | [number, number] | null): void {
+  if (!Array.isArray(value) || value.length !== 2) {
+    createdAtRange.value = null
+    filter.createdAtFrom = null
+    filter.createdAtTo = null
+    return
+  }
+
+  createdAtRange.value = [value[0], value[1]]
+  filter.createdAtFrom = toLocalDateTime(value[0])
+  filter.createdAtTo = toLocalDateTime(value[1])
 }
 
 function targetTypeLabel(targetType: number): string {
@@ -268,11 +293,19 @@ const columns: DataTableColumns<AdminNotificationItem> = [
     },
   },
   {
+    title: 'Created At',
+    key: 'createdAt',
+    width: 170,
+    render(row) {
+      return row.createdAtShamsi
+    },
+  },
+  {
     title: 'Expires',
     key: 'expiresAt',
     width: 170,
     render(row) {
-      return row.expiresAt ? new Date(row.expiresAt).toLocaleString() : '—'
+      return row.expiresAtShamsi ?? '—'
     },
   },
   {
@@ -361,6 +394,17 @@ onMounted(() => {
           <n-form-item label="Status">
             <n-select v-model:value="activeFilter" :options="activeFilterOptions" />
           </n-form-item>
+          <n-form-item label="Creation date/time range">
+            <n-date-picker
+              type="datetimerange"
+              clearable
+              format="yyyy-MM-dd HH:mm:ss"
+              :value="createdAtRange"
+              start-placeholder="Start date/time"
+              end-placeholder="End date/time"
+              @update:value="updateCreatedAtRange"
+            />
+          </n-form-item>
           <div class="search-action">
             <n-button type="info" :loading="loading" @click="search">Search</n-button>
           </div>
@@ -375,7 +419,7 @@ onMounted(() => {
         :loading="loading"
         :pagination="pagination"
         :row-key="(row: AdminNotificationItem) => row.id"
-        :scroll-x="1250"
+        :scroll-x="1450"
         @update:page="handlePageChange"
         @update:page-size="handlePageSizeChange"
       />
@@ -406,7 +450,8 @@ onMounted(() => {
 
 .filter-grid {
   display: grid;
-  grid-template-columns: minmax(200px, 2fr) repeat(4, minmax(130px, 1fr)) auto;
+  grid-template-columns:
+    minmax(200px, 2fr) repeat(4, minmax(130px, 1fr)) minmax(240px, 1.5fr) auto;
   gap: 12px;
   align-items: end;
   margin-bottom: 18px;

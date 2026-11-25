@@ -11,6 +11,7 @@ export interface LoginResponse {
   error: string | null
   expires_at: string
   isAdmin: boolean
+  roles: string[]
 }
 
 export interface User {
@@ -18,6 +19,7 @@ export interface User {
   fullName: string
   username: string
   isAdmin?: boolean
+  roles?: string[]
 }
 
 export interface MenuItem {
