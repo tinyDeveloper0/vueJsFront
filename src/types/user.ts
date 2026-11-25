@@ -8,6 +8,7 @@ export interface User {
   tel: string
   registerDate: string
   roleTitle: string
+  roleIds: number[]
   userType: number
   userTypeStr: string
   description: string
@@ -29,6 +30,7 @@ export interface UserFormModel {
   userType: number
   isEnabled: boolean
   description: string
+  roleIds: number[]
   isEdit: boolean
   isGod: boolean
 }

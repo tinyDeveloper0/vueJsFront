@@ -2,6 +2,8 @@
 import { computed, reactive, ref, watch } from 'vue'
 import {
   NButton,
+  NCheckbox,
+  NCheckboxGroup,
   NForm,
   NFormItem,
   NInput,
@@ -9,12 +11,15 @@ import {
   NModal,
   NSelect,
   NSpace,
+  NSpin,
   NSwitch,
   type FormInst,
   type FormRules,
 } from 'naive-ui'
 
+import { roleApi } from '@/api/roleApi'
 import { userTypes } from '@/enums/userTypes'
+import type { Role } from '@/types/role'
 import type { User, UserFormModel } from '@/types/user'
 
 const props = defineProps<{
@@ -29,6 +34,9 @@ const emit = defineEmits<{
 }>()
 
 const formRef = ref<FormInst | null>(null)
+const rolesLoading = ref(false)
+const roles = ref<Role[]>([])
+const roleSearch = ref('')
 
 const form = reactive<UserFormModel>({
   id: 0,
@@ -42,12 +50,33 @@ const form = reactive<UserFormModel>({
   userType: 0,
   isEnabled: true,
   description: '',
+  roleIds: [],
   isEdit: false,
   isGod: false,
 })
 
 const isEdit = computed(() => form.isEdit)
 const title = computed(() => (isEdit.value ? 'Edit User' : 'Add User'))
+
+const roleOptions = computed(() => {
+  const keyword = roleSearch.value.trim().toLowerCase()
+
+  return roles.value
+    .filter((item) => {
+      if (!keyword) return true
+
+      const titleText = item.title?.toLowerCase() ?? ''
+      const accessText = item.accessTypeStr?.toLowerCase() ?? ''
+
+      return titleText.includes(keyword) || accessText.includes(keyword)
+    })
+    .map((item) => ({
+      label: item.title,
+      value: item.id,
+    }))
+})
+
+const selectedRoleCount = computed(() => form.roleIds.length)
 
 const rules = computed<FormRules>(() => ({
   userName: {
@@ -83,8 +112,10 @@ function resetForm() {
   form.userType = 0
   form.isEnabled = true
   form.description = ''
+  form.roleIds = []
   form.isEdit = false
   form.isGod = false
+  roleSearch.value = ''
 }
 
 function fillFromUser(user: User) {
@@ -102,14 +133,40 @@ function fillFromUser(user: User) {
   form.userType = user.userType ?? 0
   form.isEnabled = user.isEnabled ?? true
   form.description = user.description ?? ''
+  form.roleIds = [...(user.roleIds ?? [])]
   form.isEdit = true
   form.isGod = user.isGod ?? false
+  roleSearch.value = ''
+}
+
+async function loadRoles() {
+  if (roles.value.length > 0) return
+
+  rolesLoading.value = true
+
+  try {
+    const response = await roleApi.getRoles({
+      title: '',
+      sort: '',
+      order: '',
+      page: 1,
+      perPage: 1000,
+    })
+    roles.value = response.items ?? []
+  } catch (e) {
+    console.error(e)
+    roles.value = []
+  } finally {
+    rolesLoading.value = false
+  }
 }
 
 watch(
   () => props.show,
-  (visible) => {
+  async (visible) => {
     if (!visible) return
+
+    await loadRoles()
 
     if (props.user) {
       fillFromUser(props.user)
@@ -132,6 +189,7 @@ async function handleSave() {
 
   emit('save', {
     ...form,
+    roleIds: [...form.roleIds],
     // Backend only updates password when value is not null
     password: form.password?.trim() || null,
   })
@@ -151,10 +209,12 @@ async function handleSave() {
   >
     <n-form
       ref="formRef"
+      class="compact-form"
       :model="form"
       :rules="rules"
       size="small"
       label-placement="top"
+      :show-require-mark="false"
       require-mark-placement="right-hanging"
     >
       <div class="form-grid">
@@ -219,6 +279,43 @@ async function handleSave() {
             :disabled="saving"
           />
         </n-form-item>
+
+        <n-form-item class="full-span" path="roleIds">
+          <template #label>
+            <div class="roles-label">
+              <span>Roles</span>
+              <span class="roles-count">{{ selectedRoleCount }} selected</span>
+            </div>
+          </template>
+
+          <n-spin :show="rolesLoading" class="full-width">
+            <div class="roles-panel">
+              <n-input
+                v-model:value="roleSearch"
+                clearable
+                placeholder="Search roles..."
+                :disabled="saving"
+              />
+
+              <div class="role-scroll">
+                <n-checkbox-group v-model:value="form.roleIds" :disabled="saving">
+                  <div class="role-list">
+                    <n-checkbox
+                      v-for="option in roleOptions"
+                      :key="option.value"
+                      :value="option.value"
+                      :label="option.label"
+                    />
+                  </div>
+                </n-checkbox-group>
+              </div>
+
+              <div v-if="!rolesLoading && roleOptions.length === 0" class="empty-hint">
+                {{ roleSearch.trim() ? 'No roles match your search.' : 'No roles found.' }}
+              </div>
+            </div>
+          </n-spin>
+        </n-form-item>
       </div>
     </n-form>
 
@@ -238,8 +335,21 @@ async function handleSave() {
   gap: 0 12px;
 }
 
-.form-grid :deep(.n-form-item) {
-  margin-bottom: 8px;
+.compact-form :deep(.n-form-item) {
+  margin-bottom: 4px;
+}
+
+.compact-form :deep(.n-form-item-label) {
+  min-height: 0;
+  padding: 0 0 1px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.compact-form :deep(.n-form-item-feedback-wrapper) {
+  min-height: 0;
+  padding: 0;
+  line-height: 1.2;
 }
 
 .full-span {
@@ -250,8 +360,52 @@ async function handleSave() {
   width: 100%;
 }
 
+.roles-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.roles-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: #999;
+}
+
+.roles-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.role-scroll {
+  height: 132px;
+  max-height: 132px;
+  overflow-y: auto;
+  padding: 6px 10px;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.role-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  width: 100%;
+}
+
+.empty-hint {
+  color: #999;
+  font-size: 13px;
+}
+
 @media (max-width: 600px) {
-  .form-grid {
+  .form-grid,
+  .role-list {
     grid-template-columns: 1fr;
   }
 }
@@ -259,18 +413,24 @@ async function handleSave() {
 
 <style>
 .user-form-modal.n-card {
-  max-height: calc(100vh - 48px);
+  max-height: calc(100vh - 24px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.user-form-modal .n-card-header {
+  padding: 10px 16px 6px;
 }
 
 .user-form-modal .n-card__content {
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding: 4px 16px 6px;
 }
 
 .user-form-modal .n-card__footer {
-  padding-top: 8px;
+  padding: 6px 16px 10px;
 }
 </style>

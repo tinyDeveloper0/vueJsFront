@@ -222,6 +222,9 @@ const columns: DataTableColumns<User> = [
   {
     title: 'Role',
     key: 'roleTitle',
+    ellipsis: {
+      tooltip: true,
+    },
   },
   {
     title: 'User Type',
