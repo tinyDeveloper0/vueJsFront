@@ -14,6 +14,16 @@ static  PermissionList:string='users/PermissionList';
 static  RoleMenuAccess:string='users/RoleMenuAccess';
 static  SaveRoleMenuAccess:string='users/SaveRoleMenuAccess';
 
+ //****************Notifications *************** */
+static  NotificationList:string='notifications/List';
+static  NotificationUnreadCount:string='notifications/UnreadCount';
+static  NotificationRead:string='notifications/Read';
+static  NotificationReadAll:string='notifications/ReadAll';
+static  NotificationAdminList:string='notifications/admin/List';
+static  NotificationAdminCreate:string='notifications/admin/Create';
+static  NotificationAdminUpdate:string='notifications/admin/Update';
+static  NotificationAdminSetActive:string='notifications/admin/SetActive';
+static  NotificationAdminReadReport:string='notifications/admin';
 
   //****************Product *************** */
   static  ProductList:string='product/ProductList';

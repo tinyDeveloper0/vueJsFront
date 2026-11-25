@@ -10,12 +10,14 @@ export interface LoginResponse {
   token: string
   error: string | null
   expires_at: string
+  isAdmin: boolean
 }
 
 export interface User {
   id: number
   fullName: string
   username: string
+  isAdmin?: boolean
 }
 
 export interface MenuItem {

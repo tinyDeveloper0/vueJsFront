@@ -121,11 +121,14 @@ function findSiblings(
   key: number,
 ): { siblings: MenuTreeOption[]; index: number } | null {
   for (let i = 0; i < options.length; i++) {
-    if (options[i].key === key) {
+    const option = options[i]
+    if (!option) continue
+
+    if (option.key === key) {
       return { siblings: options, index: i }
     }
 
-    const children = options[i].children
+    const children = option.children
     if (children?.length) {
       const found = findSiblings(children, key)
       if (found) return found
@@ -151,6 +154,7 @@ function handleDrop({ node, dragNode, dropPosition }: TreeDropInfo) {
   if (!dragInfo) return
 
   const dragItem = dragInfo.siblings[dragInfo.index]
+  if (!dragItem) return
 
   // Prevent dropping a parent into one of its descendants
   if (dropPosition === 'inside' && containsKey(dragItem, dropKey)) {
@@ -167,6 +171,11 @@ function handleDrop({ node, dragNode, dropPosition }: TreeDropInfo) {
     }
 
     const parent = target.siblings[target.index]
+    if (!parent) {
+      dragInfo.siblings.splice(dragInfo.index, 0, dragItem)
+      return
+    }
+
     if (!parent.children) parent.children = []
     parent.children.unshift(dragItem)
     dragItem.parentId = parent.key

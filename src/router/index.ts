@@ -8,6 +8,8 @@ import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import UserList from '@/views/UserList.vue'
 import RoleList from '@/views/RoleList.vue'
+import NotificationsView from '@/views/NotificationsView.vue'
+import NotificationAdminView from '@/views/NotificationAdminView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -59,6 +61,19 @@ const router = createRouter({
           name: 'roleList',
           component: RoleList,
         },
+        {
+          path: 'notifications',
+          name: 'notifications',
+          component: NotificationsView,
+        },
+        {
+          path: 'notification-admin',
+          name: 'notificationAdmin',
+          component: NotificationAdminView,
+          meta: {
+            requiresAdmin: true,
+          },
+        },
       ],
     },
   ],
@@ -72,6 +87,10 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    return '/dashboard'
+  }
+
+  if (to.meta.requiresAdmin && !authStore.user?.isAdmin) {
     return '/dashboard'
   }
 

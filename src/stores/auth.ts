@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { login as doLogin } from '@/api/authApi'
+import { useNotificationStore } from '@/stores/notifications'
 
 import {
   clearSession,
@@ -42,14 +43,20 @@ export const useAuthStore = defineStore('auth', () => {
       id: response.id,
       fullName: response.fullName,
       username: response.username,
+      isAdmin: response.isAdmin,
     }
 
     user.value = loggedInUser
 
     setStoredUser(loggedInUser)
+    await useNotificationStore().connectRealtime()
   }
 
-  function logout(): void {
+  async function logout(): Promise<void> {
+    const notificationStore = useNotificationStore()
+    await notificationStore.disconnectRealtime()
+    notificationStore.clear()
+
     accessToken.value = null
     user.value = null
 
